@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Catálogo de Produtos — NoSQL</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #2a2f42;
+    --accent: #5b6ef5;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #e8eaf0;
+    --text2: #8b90a8;
+    --text3: #555a72;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  /* SETUP SCREEN */
+  #setupScreen {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 30% 40%, #1a1f3a 0%, var(--bg) 60%);
+  }
+  .setup-box {
+    width: 480px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+  }
+  .setup-box .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .setup-box .logo span { color: var(--accent); }
+  .setup-box p { font-size: 14px; color: var(--text2); margin-bottom: 2rem; line-height: 1.6; }
+  .setup-box label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 6px; letter-spacing: .05em; text-transform: uppercase; }
+  .setup-box input {
+    width: 100%; height: 44px; padding: 0 14px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    margin-bottom: 16px; transition: border-color .2s;
+  }
+  .setup-box input:focus { outline: none; border-color: var(--accent); }
+  .divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: var(--text3); font-size: 13px; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .btn-primary {
+    width: 100%; height: 46px; background: var(--accent);
+    border: none; border-radius: 10px; color: #fff;
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: opacity .2s;
+  }
+  .btn-primary:hover { opacity: .85; }
+  .btn-demo {
+    width: 100%; height: 46px; background: transparent;
+    border: 1px solid var(--border); border-radius: 10px; color: var(--text2);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-demo:hover { border-color: var(--text2); color: var(--text); }
+  .setup-status { font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; display: none; }
+  .setup-status.err { background: rgba(248,113,113,.12); color: var(--red); border: 1px solid rgba(248,113,113,.2); display: block; }
+  .setup-status.info { background: rgba(91,110,245,.12); color: #818cf8; border: 1px solid rgba(91,110,245,.2); display: block; }
+
+  /* APP */
+  #app { display: none; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 10;
+  }
+  header .title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+  header .title span { color: var(--accent); }
+  .mode-badge {
+    font-size: 11px; padding: 4px 10px; border-radius: 20px;
+    background: rgba(91,110,245,.15); color: #818cf8;
+    border: 1px solid rgba(91,110,245,.2); font-weight: 500;
+  }
+  .mode-badge.demo { background: rgba(251,191,36,.1); color: var(--yellow); border-color: rgba(251,191,36,.2); }
+
+  main { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 65px); }
+
+  /* SIDEBAR */
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem;
+  }
+  aside h3 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--text2); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1rem; }
+  .form-group { margin-bottom: 12px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 9px 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    transition: border-color .2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
+  .form-group select option { background: var(--surface2); }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-save {
+    width: 100%; height: 44px; background: var(--accent);
+    border: none; border-radius: 8px; color: #fff;
+    font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; margin-top: 4px; transition: opacity .2s;
+  }
+  .btn-save:hover { opacity: .85; }
+  .btn-cancel {
+    width: 100%; height: 38px; background: transparent;
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text2);
+    font-size: 13px; cursor: pointer; margin-top: 6px; transition: all .2s;
+  }
+  .btn-cancel:hover { border-color: var(--text2); }
+
+  /* CONTENT */
+  .content { padding: 1.5rem 2rem; }
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem 1.25rem;
+  }
+  .stat-card .val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+  .stat-card .lbl { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .stat-card.green .val { color: var(--green); }
+  .stat-card.blue .val { color: var(--accent); }
+  .stat-card.purple .val { color: var(--accent2); }
+
+  .toolbar { display: flex; gap: 10px; margin-bottom: 1.25rem; }
+  .toolbar input {
+    flex: 1; height: 38px; padding: 0 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+  }
+  .toolbar input:focus { outline: none; border-color: var(--accent); }
+  .toolbar select {
+    height: 38px; padding: 0 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px;
+  }
+  .toolbar select option { background: var(--surface2); }
+  .btn-refresh {
+    height: 38px; width: 38px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text2);
+    cursor: pointer; font-size: 16px; transition: all .2s;
+  }
+  .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+
+  .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .product-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.25rem;
+    transition: border-color .2s, transform .15s;
+    position: relative; overflow: hidden;
+  }
+  .product-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0; transition: opacity .2s;
+  }
+  .product-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .product-card:hover::before { opacity: 1; }
+  .cat-badge {
+    font-size: 11px; padding: 3px 9px; border-radius: 20px;
+    background: rgba(91,110,245,.12); color: #818cf8;
+    border: 1px solid rgba(91,110,245,.2); display: inline-block; margin-bottom: 10px;
+  }
+  .product-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .product-price { font-size: 22px; font-weight: 500; color: var(--green); margin-bottom: 6px; }
+  .product-desc { font-size: 13px; color: var(--text2); line-height: 1.5; margin-bottom: 8px; min-height: 38px; }
+  .product-stock { font-size: 12px; color: var(--text3); margin-bottom: 14px; }
+  .product-stock.low { color: var(--red); }
+  .card-actions { display: flex; gap: 8px; }
+  .btn-edit, .btn-del {
+    flex: 1; height: 32px; border-radius: 7px; font-size: 12px;
+    cursor: pointer; border: 1px solid var(--border); font-family: 'DM Sans', sans-serif;
+    transition: all .15s;
+  }
+  .btn-edit { background: rgba(91,110,245,.1); color: #818cf8; border-color: rgba(91,110,245,.2); }
+  .btn-edit:hover { background: rgba(91,110,245,.2); }
+  .btn-del { background: rgba(248,113,113,.08); color: var(--red); border-color: rgba(248,113,113,.2); }
+  .btn-del:hover { background: rgba(248,113,113,.18); }
+
+  .empty {
+    grid-column: 1/-1; text-align: center; padding: 4rem;
+    color: var(--text3); font-size: 14px;
+  }
+  .empty .icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 18px;
+    font-size: 14px; color: var(--text);
+    transform: translateY(80px); opacity: 0;
+    transition: all .3s; z-index: 100;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.ok { border-color: rgba(52,211,153,.3); color: var(--green); }
+  #toast.err { border-color: rgba(248,113,113,.3); color: var(--red); }
+
+  @media (max-width: 800px) {
+    main { grid-template-columns: 1fr; }
+    aside { border-right: none; border-bottom: 1px solid var(--border); }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TELA DE CONFIGURAÇÃO -->
+<div id="setupScreen">
+  <div class="setup-box">
+    <div class="logo">Catálogo <span>NoSQL</span></div>
+    <p>Sistema CRUD conectado ao Firebase Firestore.<br>Insira suas credenciais ou use o modo demonstração.</p>
+    <div id="setupStatus" class="setup-status"></div>
+    <label>API Key</label>
+    <input id="apiKey" placeholder="AIzaSy..." />
+    <label>Project ID</label>
+    <input id="projectId" placeholder="meu-projeto-123" />
+    <button class="btn-primary" onclick="connectFirebase()">Conectar ao Firebase</button>
+    <div class="divider">ou</div>
+    <button class="btn-demo" onclick="useDemoMode()">Usar modo demonstração (sem Firebase)</button>
+  </div>
+</div>
+
+<!-- APP PRINCIPAL -->
+<div id="app">
+  <header>
+    <div class="title">Catálogo <span>NoSQL</span></div>
+    <span id="modeBadge" class="mode-badge">Firebase</span>
+  </header>
+  <main>
+    <aside>
+      <h3 id="formTitle">Novo Produto</h3>
+      <div class="form-group">
+        <label>Nome do produto</label>
+        <input id="fName" placeholder="Ex: Notebook Gamer" />
+      </div>
+      <div class="form-grid2">
+        <div class="form-group">
+          <label>Preço (R$)</label>
+          <input id="fPrice" type="number" placeholder="0,00" min="0" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label>Estoque</label>
+          <input id="fStock" type="number" placeholder="0" min="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Categoria</label>
+        <select id="fCat">
+          <option value="">Selecionar...</option>
+          <option>Eletrônicos</option>
+          <option>Roupas</option>
+          <option>Alimentos</option>
+          <option>Casa</option>
+          <option>Esportes</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Descrição</label>
+        <textarea id="fDesc" placeholder="Detalhes do produto..."></textarea>
+      </div>
+      <button class="btn-save" onclick="saveProduct()">Salvar produto</button>
+      <button class="btn-cancel" id="btnCancel" onclick="clearForm()" style="display:none">Cancelar edição</button>
+    </aside>
+
+    <div class="content">
+      <div class="stats-row">
+        <div class="stat-card blue"><div class="val" id="statTotal">0</div><div class="lbl">Produtos</div></div>
+        <div class="stat-card purple"><div class="val" id="statCats">0</div><div class="lbl">Categorias</div></div>
+        <div class="stat-card green"><div class="val" id="statStock">0</div><div class="lbl">Itens em estoque</div></div>
+      </div>
+      <div class="toolbar">
+        <input id="searchInput" placeholder="🔍  Buscar produto..." oninput="renderProducts()" />
+        <select id="filterCat" onchange="renderProducts()">
+          <option value="">Todas as categorias</option>
+          <option>Eletrônicos</option>
+          <option>Roupas</option>
+          <option>Alimentos</option>
+          <option>Casa</option>
+          <option>Esportes</option>
+          <option>Outros</option>
+        </select>
+        <button class="btn-refresh" onclick="loadProducts()" title="Atualizar">↻</button>
+      </div>
+      <div id="productsList" class="products-grid"></div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script>
+let PRODUCTS = [];
+let db = null;
+let demoMode = false;
+let editingId = null;
+
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 3000);
+}
+
+function showSetupStatus(msg, type) {
+  const el = document.getElementById('setupStatus');
+  el.textContent = msg;
+  el.className = 'setup-status ' + type;
+}
+
+async function connectFirebase() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const projectId = document.getElementById('projectId').value.trim();
+  if (!apiKey || !projectId) { showSetupStatus('Preencha a API Key e o Project ID.', 'err'); return; }
+  showSetupStatus('Conectando...', 'info');
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp({ apiKey, projectId });
+    }
+    db = firebase.firestore();
+    await db.collection('produtos').limit(1).get();
+    document.getElementById('setupScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('modeBadge').textContent = 'Firebase Firestore';
+    loadProducts();
+  } catch(e) {
+    showSetupStatus('Erro: ' + e.message, 'err');
+  }
+}
+
+function useDemoMode() {
+  demoMode = true;
+  PRODUCTS = [
+    { id: '1', nome: 'Notebook Gamer', categoria: 'Eletrônicos', preco: 4299.99, estoque: 5, descricao: 'Intel i7, 16GB RAM, RTX 3060' },
+    { id: '2', nome: 'Camiseta Polo', categoria: 'Roupas', preco: 89.90, estoque: 30, descricao: 'Algodão premium, várias cores' },
+    { id: '3', nome: 'Café Gourmet 500g', categoria: 'Alimentos', preco: 38.50, estoque: 100, descricao: 'Torração média, grãos selecionados' },
+    { id: '4', nome: 'Tênis Running', categoria: 'Esportes', preco: 349.90, estoque: 2, descricao: 'Solado em EVA, cabedal respirável' },
+  ];
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  const badge = document.getElementById('modeBadge');
+  badge.textContent = 'Modo Demonstração';
+  badge.classList.add('demo');
+  renderProducts();
+  updateStats();
+}
+
+async function loadProducts() {
+  if (demoMode) { renderProducts(); updateStats(); return; }
+  try {
+    const snap = await db.collection('produtos').orderBy('nome').get();
+    PRODUCTS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderProducts(); updateStats();
+  } catch(e) { toast('Erro ao carregar: ' + e.message, 'err'); }
+}
+
+async function saveProduct() {
+  const nome = document.getElementById('fName').value.trim();
+  const preco = parseFloat(document.getElementById('fPrice').value);
+  const categoria = document.getElementById('fCat').value;
+  const estoque = parseInt(document.getElementById('fStock').value) || 0;
+  const descricao = document.getElementById('fDesc').value.trim();
+  if (!nome || !categoria || isNaN(preco)) { toast('Preencha nome, categoria e preço.', 'err'); return; }
+  const produto = { nome, preco, categoria, estoque, descricao, criadoEm: new Date().toISOString() };
+  try {
+    if (demoMode) {
+      if (editingId) {
+        const idx = PRODUCTS.findIndex(p => p.id === editingId);
+        if (idx !== -1) PRODUCTS[idx] = { id: editingId, ...produto };
+      } else {
+        PRODUCTS.push({ id: Date.now().toString(), ...produto });
+      }
+    } else {
+      if (editingId) {
+        await db.collection('produtos').doc(editingId).update(produto);
+      } else {
+        await db.collection('produtos').add(produto);
+        await loadProducts();
+      }
+    }
+    clearForm(); renderProducts(); updateStats();
+    toast(editingId ? 'Produto atualizado!' : 'Produto adicionado!');
+    editingId = null;
+  } catch(e) { toast('Erro: ' + e.message, 'err'); }
+}
+
+function editProduct(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  if (!p) return;
+  editingId = id;
+  document.getElementById('fName').value = p.nome;
+  document.getElementById('fPrice').value = p.preco;
+  document.getElementById('fCat').value = p.categoria;
+  document.getElementById('fStock').value = p.estoque;
+  document.getElementById('fDesc').value = p.descricao || '';
+  document.getElementById('formTitle').textContent = 'Editar Produto';
+  document.getElementById('btnCancel').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Excluir este produto?')) return;
+  try {
+    if (demoMode) {
+      PRODUCTS = PRODUCTS.filter(p => p.id !== id);
+    } else {
+      await db.collection('produtos').doc(id).delete();
+      await loadProducts();
+    }
+    renderProducts(); updateStats();
+    toast('Produto excluído.');
+  } catch(e) { toast('Erro: ' + e.message, 'err'); }
+}
+
+function clearForm() {
+  ['fName','fPrice','fStock','fDesc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fCat').value = '';
+  document.getElementById('formTitle').textContent = 'Novo Produto';
+  document.getElementById('btnCancel').style.display = 'none';
+  editingId = null;
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = PRODUCTS.length;
+  document.getElementById('statCats').textContent = new Set(PRODUCTS.map(p => p.categoria).filter(Boolean)).size;
+  document.getElementById('statStock').textContent = PRODUCTS.reduce((s, p) => s + (parseInt(p.estoque) || 0), 0);
+}
+
+function renderProducts() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const cat = document.getElementById('filterCat').value;
+  const list = PRODUCTS.filter(p =>
+    p.nome.toLowerCase().includes(search) && (!cat || p.categoria === cat)
+  );
+  const el = document.getElementById('productsList');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty"><div class="icon">📦</div>Nenhum produto encontrado</div>';
+    return;
+  }
+  el.innerHTML = list.map(p => `
+    <div class="product-card">
+      <span class="cat-badge">${p.categoria}</span>
+      <div class="product-name">${p.nome}</div>
+      <div class="product-price">R$ ${parseFloat(p.preco).toFixed(2)}</div>
+      <div class="product-desc">${p.descricao || '—'}</div>
+      <div class="product-stock ${p.estoque <= 3 ? 'low' : ''}">
+        ${p.estoque <= 3 ? '⚠️' : '📦'} Estoque: ${p.estoque} unidades
+      </div>
+      <div class="card-actions">
+        <button class="btn-edit" onclick="editProduct('${p.id}')">✏️ Editar</button>
+        <button class="btn-del" onclick="deleteProduct('${p.id}')">🗑️ Excluir</button>
+      </div>
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>
