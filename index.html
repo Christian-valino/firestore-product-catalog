@@ -393,6 +393,7 @@ async function saveProduct() {
     } else {
       if (editingId) {
         await db.collection('produtos').doc(editingId).update(produto);
+        await loadProducts();
       } else {
         await db.collection('produtos').add(produto);
         await loadProducts();
